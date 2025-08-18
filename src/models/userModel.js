@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
 
 			firstname: {
 				type: DataTypes.STRING,
-				allowNull: false,
+				allowNull: true,
 			},
 
 			lastname: {
@@ -48,14 +48,14 @@ module.exports = (sequelize, DataTypes) => {
 				unique: true,
 			},
 
-			isPhoneNumberVerified: {
-				type: DataTypes.BOOLEAN,
-				defaultValue: false,
+			phoneNumberVerifiedAt: {
+				type: DataTypes.DATE,
+				allowNull: true,
 			},
 
-			isEmailVerified: {
-				type: DataTypes.BOOLEAN,
-				defaultValue: false,
+			emailVerifiedAt: {
+				type: DataTypes.DATE,
+				allowNull: true,
 			},
 
 			role: {
@@ -63,22 +63,17 @@ module.exports = (sequelize, DataTypes) => {
 				defaultValue: ROLE.USER, // Default role is USER
 			},
 
-			phoneOtp: {
+			avatar: {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
 
-			emailOtp: {
+			otp: {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
 
-			phoneOtpExpiryTime: {
-				type: DataTypes.DATE,
-				allowNull: true,
-			},
-
-			emailOtpExpiryTime: {
+			otpExpiredAt: {
 				type: DataTypes.DATE,
 				allowNull: true,
 			},
@@ -96,20 +91,9 @@ module.exports = (sequelize, DataTypes) => {
 	// `beforeUpdate` hook is called when you update an existing record.
 	// Only triggers if .save() or .update() is called on an existing record
 	UserModel.addHook("beforeUpdate", async (user, options) => {
-		if (user.phoneOtp && user.changed("phoneOtp")) {
-			const hashedPhoneOtp = await bcryptjs.hash(
-				user.phoneOtp,
-				env.SALT_ROUNDS
-			);
-			user.phoneOtp = hashedPhoneOtp;
-		}
-
-		if (user.emailOtp && user.changed("emailOtp")) {
-			const hashedEmailOtp = await bcryptjs.hash(
-				user.emailOtp,
-				env.SALT_ROUNDS
-			);
-			user.emailOtp = hashedEmailOtp;
+		if (user.otp && user.changed("otp")) {
+			const hashedOtp = await bcryptjs.hash(user.otp, env.SALT_ROUNDS);
+			user.otp = hashedOtp;
 		}
 	});
 
@@ -120,22 +104,16 @@ module.exports = (sequelize, DataTypes) => {
 	 * @param {String} phoneOrEmailStoredOtp - Phone or Email stored OTP
 	 * @returns {Boolean} - returns true OTP is correct, Otherwise returns false.
 	 */
-	UserModel.prototype.compareOTP = async function (
-		enteredOTP,
-		phoneOrEmailStoredOtp
-	) {
-		return await bcryptjs.compare(enteredOTP, phoneOrEmailStoredOtp);
+	UserModel.prototype.compareOTP = async function (userEnteredOTP) {
+		return await bcryptjs.compare(userEnteredOTP, this.otp);
 	};
 
 	/**
 	 * Instance method to check whether OTP is expired or not.
-	 * @param {DATE} phoneOrEmailStoredOtpExpiryTime - Date object represent the email or phone OTP expiry time.
 	 * @returns {Boolean} - returns true if expires, Otherwise return false.
 	 */
-	UserModel.prototype.isOTPExpired = function (
-		phoneOrEmailStoredOtpExpiryTime
-	) {
-		if (phoneOrEmailStoredOtpExpiryTime.getTime() < Date.now()) {
+	UserModel.prototype.isOTPExpired = function () {
+		if (!this.otpExpiredAt || this.otpExpiredAt.getTime() < Date.now()) {
 			// OTP is expired.
 			return true;
 		}

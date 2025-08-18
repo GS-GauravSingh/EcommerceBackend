@@ -23,6 +23,9 @@ const env = {
 	JWT_SECRET_KEY: process.env.JWT_SECRET_KEY,
 
 	SALT_ROUNDS: parseInt(process.env.SALT_ROUNDS, 10) || 12,
+
+	NODEMAILER_USERNAME: process.env.NODEMAILER_USERNAME,
+	NODEMAILER_PASSWORD: process.env.NODEMAILER_PASSWORD
 };
 
 module.exports = { env };

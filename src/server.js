@@ -51,6 +51,7 @@ app.get("/", (req, res) => {
 		message: "Welcome to the Ecommerce Backend API",
 	});
 });
+app.use("/api", require("./routes"));
 
 // Error Middlewares
 app.use(errorHandler.routeNotFound);

@@ -27,6 +27,33 @@ module.exports = (sequelize, DataTypes) => {
 				onDelete: "CASCADE", // If user is deleted, delete all their addresses
 			},
 
+			firstname: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
+
+			lastname: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
+
+			email: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				unique: true,
+
+				// If allowNull is ture and the user didn't provided any value then the Built-in validators will be skipped.
+				validate: {
+					isEmail: true,
+				},
+			},
+
+			phoneNumber: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				unique: true,
+			},
+
 			street: {
 				type: DataTypes.STRING,
 				allowNull: false,
@@ -52,10 +79,6 @@ module.exports = (sequelize, DataTypes) => {
 				allowNull: false,
 			},
 
-			isDefault: {
-				type: DataTypes.BOOLEAN,
-				defaultValue: false,
-			},
 		},
 
 		/* Model options */
