@@ -31,10 +31,11 @@ fs.readdirSync(path.join(__dirname, "lng"))
  * @param {Object} result - Object containing two properties: "msgCode" and "data".
  *                        - "msgCode" is the key for the message in the lngObj,
  *                        - "data" is the payload to be sent in the response.
+ * @param {Object} dbTransaction - Database Transaction object
  * @param {Number} statusCode - The HTTP status code to be sent in the response.Defaults to 200 (OK) if not provided.
  *
  */
-module.exports.successResponse = (req, res, result, statusCode) => {
+module.exports.successResponse = async (req, res, result, statusCode, dbTransaction) => {
 	const lng = req.headers["accept-language"] || "en"; // Get the user's preferred language from the request headers, defaulting to 'en' (English) if not specified.
 
 	const responseObj = {
@@ -51,6 +52,10 @@ module.exports.successResponse = (req, res, result, statusCode) => {
 		time: Date.now(),
 	};
 
+	if(dbTransaction){
+		await dbTransaction.commit();
+	}
+
 	return res.status(statusCode || 200).json(responseObj);
 };
 
@@ -61,9 +66,10 @@ module.exports.successResponse = (req, res, result, statusCode) => {
  * @param {Object} error - Object containing two properties: "msgCode" and "error".
  *                        - "msgCode" is the key for the message in the lngObj,
  *                        - "error" is the error object or message to be sent in the response.
+ * @param {Object} dbTransaction - Database Transaction object
  * @param {Number} statusCode - The HTTP status code to be sent in the response. Defaults to 500 (Internal Server Error) if not provided.
  */
-module.exports.errorResponse = (req, res, error, statusCode) => {
+module.exports.errorResponse = async (req, res, error, statusCode, dbTransaction) => {
 	const lng = req.headers["accept-language"] || "en"; // Get the user's preferred language from the request headers, defaulting to 'en' (English) if not specified.
 
 	const responseObj = {
@@ -79,6 +85,10 @@ module.exports.errorResponse = (req, res, error, statusCode) => {
 		},
 		time: Date.now(),
 	};
+
+	if(dbTransaction){
+		await dbTransaction.rollback();
+	}
 
 	return res.status(statusCode || 500).json(responseObj);
 };

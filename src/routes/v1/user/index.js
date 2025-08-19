@@ -5,7 +5,7 @@ const authValidation = require("../../../validations/authValidation");
 
 
 /* ================== Authentication ================== */
-// router.post("/login", requestValidator(authValidation.login), authControllers.loginOrRegister);
+router.post("/login", requestValidator(authValidation.login), authControllers.login);
 // router.post("/send-otp-phone", requestValidator(authValidation.login), authControllers.sendOtpPhone);
 // router.post("/verify-otp-phone", requestValidator(authValidation.verifyOtpPhone), authControllers.verifyOtpPhone);
 // router.post("/resend-otp-phone", requestValidator(authValidation.login), authControllers.reSendOtpPhone);

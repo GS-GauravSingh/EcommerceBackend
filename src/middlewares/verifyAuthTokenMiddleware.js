@@ -9,13 +9,13 @@ const verifyAuthToken = async (req, res, next) => {
 		const { Users } = db.models;
 		let token;
 
-		if (
+		if (req.cookies.accessToken) {
+			token = req.cookies.accessToken;
+		} else if (
 			req.headers.authorization &&
 			req.headers.authorization.startsWith("Bearer")
 		) {
 			token = req.headers.authorization.split(" ")[1];
-		} else if (req.cookies.accessToken) {
-			token = req.cookies.accessToken;
 		}
 
 		if (!token) {
@@ -72,7 +72,7 @@ const verifyAuthToken = async (req, res, next) => {
 		return response.error(
 			req,
 			res,
-			{ msgCode: "UNAUTHORIZED" },
+			{ msgCode: "UNAUTHORIZED", data: error?.message },
 			StatusCodes.UNAUTHORIZED
 		);
 	}

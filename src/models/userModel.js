@@ -77,6 +77,11 @@ module.exports = (sequelize, DataTypes) => {
 				type: DataTypes.DATE,
 				allowNull: true,
 			},
+
+			refreshToken: {
+				type: DataTypes.STRING,
+				allowNull: true
+			},
 		},
 
 		/* Model options */

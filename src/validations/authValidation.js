@@ -3,12 +3,11 @@ const Joi = require("joi");
 // Reusable Schemas
 const phoneSchema = Joi.string()
 	.length(10)
-	.pattern(/^[6-9][0-9]{9}$/)
+	.pattern(/^\+91[6-9]\d{9}$/)
 	.required()
 	.messages({
 		"string.empty": "Phone number is required",
-		"string.length": "Phone number must be exactly 10 digits",
-		"string.pattern.base": "Please enter a valid 10-digit mobile number",
+		"string.pattern.base": "Phone number must start with +91 and be a valid 10-digit mobile number",
 	});
 
 const otpSchema = Joi.string()
