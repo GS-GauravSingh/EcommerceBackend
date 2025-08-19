@@ -22,7 +22,7 @@ const requestValidator = (schema, source = "body") => {
 			} else {
 				const { details } = error;
 				const errorMessages = details.map((i) => i.message).join(",");
-				return response.error(
+				return response.errorResponse(
 					req,
 					res,
 					{ msgCode: "VALIDATION_ERROR", data: errorMessages },

@@ -22,7 +22,7 @@ const verifyAuthToken = async (req, res, next) => {
 			console.log(
 				"verifyAuthTokenMiddleware.js: verifyAuthToken(): Error: No token provided"
 			);
-			return response.error(
+			return response.errorResponse(
 				req,
 				res,
 				{ msgCode: "UNAUTHORIZED" },
@@ -35,7 +35,7 @@ const verifyAuthToken = async (req, res, next) => {
 			console.log(
 				"verifyAuthTokenMiddleware.js: verifyAuthToken(): Error: Invalid token"
 			);
-			return response.error(
+			return response.errorResponse(
 				req,
 				res,
 				{ msgCode: "UNAUTHORIZED" },
@@ -43,16 +43,12 @@ const verifyAuthToken = async (req, res, next) => {
 			);
 		}
 
-		const user = await commonService.findByPrimaryKey(Users, decoded.id, [
-			"id",
-			"firstname",
-			"lastname",
-			"email",
-			"phoneNumber",
-			"avatar",
-			"country",
-			"createdAt",
-		]);
+		let user = await commonService.findByPrimaryKey(
+			Users,
+			decoded.id,
+			[],
+			true
+		);
 		if (!user) {
 			console.log(
 				"verifyAuthTokenMiddleware.js: verifyAuthToken(): Error: User not found"
@@ -69,7 +65,7 @@ const verifyAuthToken = async (req, res, next) => {
 		next(); // calls the next middleware
 	} catch (error) {
 		console.log("verifyAuthTokenMiddleware.js: verifyAuthToken(): Error: ");
-		return response.error(
+		return response.errorResponse(
 			req,
 			res,
 			{ msgCode: "UNAUTHORIZED", data: error?.message },

@@ -7,12 +7,20 @@
  * @param {object} model - The model to be used for creating a new record.
  * @param {object} data - The data to be used for creating a new record.
  * @param {object} dbTransaction - The database transaction object.
+ * @param {boolean} raw - Whether to return raw sequelize instance or not.
  * @returns {object} - The record found in the database.
  */
-module.exports.createNewRecord = async (model, data, dbTransaction) => {
+module.exports.createNewRecord = async (
+	model,
+	data,
+	dbTransaction,
+	raw = false
+) => {
 	try {
 		const record = await model.create(data, { transaction: dbTransaction });
-
+		if (raw) {
+			return record ? record : null;
+		}
 		return record ? JSON.parse(JSON.stringify(record)) : null;
 	} catch (error) {
 		console.log("commonService.js: createNewRecord(): Error: ", error);
@@ -25,9 +33,15 @@ module.exports.createNewRecord = async (model, data, dbTransaction) => {
  * @param {object} model - The model to be used for querying the database.
  * @param {Object} condition - The condition to be used for querying the database.
  * @param {object} attributes - The attributes to be returned from the database.
+ * @param {boolean} raw - Whether to return raw sequelize instance or not.
  * @returns {object} - The record found in the database.
  */
-module.exports.findByCondition = async (model, condition, attributes) => {
+module.exports.findByCondition = async (
+	model,
+	condition,
+	attributes,
+	raw = false
+) => {
 	try {
 		const record = await model.findOne({
 			where: condition,
@@ -36,6 +50,10 @@ module.exports.findByCondition = async (model, condition, attributes) => {
 					attributes,
 				}),
 		});
+
+		if (raw) {
+			return record ? record : null;
+		}
 
 		return record ? JSON.parse(JSON.stringify(record)) : null;
 	} catch (error) {
@@ -49,9 +67,15 @@ module.exports.findByCondition = async (model, condition, attributes) => {
  * @param {object} model - The model to be used for querying the database.
  * @param {string} id - The primary key of the record to be found.
  * @param {object} attributes - The attributes to be returned from the database.
+ * @param {boolean} raw - Whether to return raw sequelize instance or not.
  * @returns {object} - The record found in the database.
  */
-module.exports.findByPrimaryKey = async (model, id, attributes) => {
+module.exports.findByPrimaryKey = async (
+	model,
+	id,
+	attributes,
+	raw = false
+) => {
 	try {
 		const record = await model.findByPk(id, {
 			...(attributes !== undefined &&
@@ -59,6 +83,10 @@ module.exports.findByPrimaryKey = async (model, id, attributes) => {
 					attributes,
 				}),
 		});
+
+		if (raw) {
+			return record ? record : null;
+		}
 
 		return record ? JSON.parse(JSON.stringify(record)) : null;
 	} catch (error) {
@@ -86,6 +114,32 @@ module.exports.updateRecord = async (model, data, condition, dbTransaction) => {
 		return record ? JSON.parse(JSON.stringify(record)) : null;
 	} catch (error) {
 		console.log("commonService.js: updateRecord(): Error: ", error);
+		throw error;
+	}
+};
+
+/**
+ * saveRecord(): This function is used to save the changed mad to a record in the database.
+ * @param {object} modelInstance - The record to be saved in the database.
+ * @param {object} dbTransaction - The database transaction object.
+ * @param {boolean} raw - Default value false, If true, returns plain JavaScript objects instead of Sequelize instances.
+ * @returns {object} - The record saved in the database.
+ */
+module.exports.saveRecord = async (
+	modelInstance,
+	dbTransaction,
+	raw = false
+) => {
+	try {
+		const record = await modelInstance.save({
+			transaction: dbTransaction,
+		});
+		if (raw) {
+			return record ? record : null;
+		}
+		return record ? JSON.parse(JSON.stringify(record)) : null;
+	} catch (error) {
+		console.log("commonService.js: saveRecord(): Error: ", error);
 		throw error;
 	}
 };

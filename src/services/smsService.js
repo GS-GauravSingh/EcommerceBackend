@@ -18,7 +18,7 @@ async function sendSMS({ recipientPhoneNumber, messageTemplate }) {
 			to: recipientPhoneNumber,
 			from: env.TWILIO_PHONE_NUMBER,
 		});
-		console.log(`SMS sent to ${phoneNumber}:`, response);
+		console.log(`SMS sent to ${recipientPhoneNumber}:`, response);
 	} catch (error) {
 		console.error("smsService.js: sendSMS(): Error: ", error);
 		throw error;

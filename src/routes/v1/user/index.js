@@ -10,45 +10,46 @@ const authValidation = require("../../../validations/authValidation");
 
 /* ================== Authentication ================== */
 router.post(
-	"/login",
+	"/auth/login",
 	requestValidator(authValidation.login),
 	authControllers.login,
 	authControllers.sendOtpPhone
 );
 
 router.post(
-	"/verify-otp-phone",
+	"/auth/verify-otp-phone",
 	requestValidator(authValidation.verifyOtp),
 	authControllers.verifyOtpPhone
 );
 
 router.post(
-	"/resend-otp-phone",
+	"/auth/resend-otp-phone",
 	requestValidator(authValidation.login),
 	authControllers.reSendOtpPhone
 );
 
 router.post(
-	"/send-otp-email",
+	"/auth/send-otp-email",
 	verifyAuthToken,
 	requestValidator(authValidation.verifyEmail),
 	authControllers.sendOtpEmail
 );
 
 router.post(
-	"/verify-otp-email",
+	"/auth/verify-otp-email",
 	verifyAuthToken,
-	requestValidator(authValidation.verifyOtp),
+	requestValidator(authValidation.verifyOtpEmail),
 	authControllers.verifyOtpEmail
 );
 
 router.post(
-	"/resend-otp-email",
+	"/auth/resend-otp-email",
 	verifyAuthToken,
 	requestValidator(authValidation.verifyEmail),
 	authControllers.sendOtpEmail
 );
 
-router.post("/logout", verifyAuthToken, authControllers.logout);
+router.post("/auth/logout", verifyAuthToken, authControllers.logout);
+router.post("/auth/refresh-access-token", authControllers.refreshAccessToken);
 
 module.exports = router;

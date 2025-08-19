@@ -19,7 +19,7 @@ const {
 } = require("../../templates/email/otpEmailTemplate");
 
 // LOGIN/REGISTER - Primary mode of authentication is via phone number and OTP. So, no need for creating a separate login and register controller.
-module.exports.login = async (req, res) => {
+module.exports.login = async (req, res, next) => {
 	const dbTransaction = await db.transaction();
 
 	try {
@@ -73,7 +73,7 @@ module.exports.login = async (req, res) => {
 };
 
 // SEND OTP - Phone Number
-module.exports.sendOtpPhone = async (req, res) => {
+module.exports.sendOtpPhone = async (req, res, next) => {
 	const dbTransaction = await db.transaction();
 
 	try {
@@ -83,24 +83,16 @@ module.exports.sendOtpPhone = async (req, res) => {
 		// Generate a 4-digit OTP
 		const otp = commonUtil.generateOTP(4);
 
-		// store the generated OTP in the user record
-		const [affectedRecordsCnt, affectedRecords] =
-			await commonService.updateRecord(
-				Users,
-				{
-					otp: otp,
-					otpExpiredAt:
-						Date.now() +
-						2 *
-							60 *
-							1000 /* OTP will expire in 2 minutes after generation */,
-				},
-				{ id: userId },
-				dbTransaction
-			);
+		// find the user and store the generated OTP in the user record
+		const user = await commonService.findByPrimaryKey(
+			Users,
+			userId,
+			[],
+			true
+		);
 
 		// Check (Optional)
-		if (affectedRecordsCnt === 0) {
+		if (!user) {
 			// User not found
 			return response.errorResponse(
 				req,
@@ -111,10 +103,19 @@ module.exports.sendOtpPhone = async (req, res) => {
 			);
 		}
 
+		// store the otp to the user record
+		user.otp = otp;
+		user.otpExpiredAt =
+			Date.now() +
+			2 * 60 * 1000; /* Once generated, OTP will expire in 2 minutes */
+
+		// Save the changes
+		await commonService.saveRecord(user, dbTransaction);
+
 		// send the OTP to the user's phone number - twilio
 		const otpMessage = generateOtpMessageTemplate(otp, 2);
 		await smsService.sendSMS({
-			recipientPhoneNumber: affectedRecords[1]?.phoneNumber,
+			recipientPhoneNumber: user?.phoneNumber,
 			messageTemplate: otpMessage,
 		});
 
@@ -141,7 +142,7 @@ module.exports.sendOtpPhone = async (req, res) => {
 };
 
 // VERIFY OTP - Phone Number
-module.exports.verifyOtpPhone = async (req, res) => {
+module.exports.verifyOtpPhone = async (req, res, next) => {
 	const dbTransaction = await db.transaction();
 
 	try {
@@ -162,9 +163,14 @@ module.exports.verifyOtpPhone = async (req, res) => {
 			);
 		}
 
-		const user = await commonService.findByCondition(Users, {
-			phoneNumber: phoneNumber,
-		});
+		let user = await commonService.findByCondition(
+			Users,
+			{
+				phoneNumber: phoneNumber,
+			},
+			[],
+			true
+		);
 
 		// Check
 		if (!user) {
@@ -206,18 +212,13 @@ module.exports.verifyOtpPhone = async (req, res) => {
 		const refreshToken = generateRefreshJWT({ id: user.id });
 
 		// Update the user record.
-		const [affectedRecordsCnt, affectedRecords] =
-			await commonService.updateRecord(
-				Users,
-				{
-					otp: null,
-					otpExpiredAt: null,
-					phoneNumberVerifiedAt: Date.now(),
-					refreshToken: refreshToken,
-				},
-				{ phoneNumber: phoneNumber },
-				dbTransaction
-			);
+		user.otp = null;
+		user.otpExpiredAt = null;
+		user.phoneNumberVerifiedAt = Date.now();
+		user.refreshToken = refreshToken;
+
+		// Save the changes
+		user = await commonService.saveRecord(user, dbTransaction);
 
 		// Access Token
 		res.cookie("accessToken", accessToken, {
@@ -241,7 +242,7 @@ module.exports.verifyOtpPhone = async (req, res) => {
 			{
 				msgCode: "OTP_VERIFIED_SUCCESSFULLY",
 				data: {
-					user: affectedRecords[1],
+					user,
 					accessToken,
 					refreshToken,
 				},
@@ -265,7 +266,7 @@ module.exports.verifyOtpPhone = async (req, res) => {
 };
 
 // RE-SEND OTP - Phone Number
-module.exports.reSendOtpPhone = async (req, res) => {
+module.exports.reSendOtpPhone = async (req, res, next) => {
 	const dbTransaction = await db.transaction();
 
 	try {
@@ -275,24 +276,16 @@ module.exports.reSendOtpPhone = async (req, res) => {
 		// Generate a 4-digit OTP
 		const otp = commonUtil.generateOTP(4);
 
-		// store the generated OTP in the user record
-		const [affectedRecordsCnt, affectedRecords] =
-			await commonService.updateRecord(
-				Users,
-				{
-					otp: otp,
-					otpExpiredAt:
-						Date.now() +
-						2 *
-							60 *
-							1000 /* OTP will expire in 2 minutes after generation */,
-				},
-				{ phoneNumber: phoneNumber },
-				dbTransaction
-			);
+		// find the user and store the generated OTP in the user record
+		const user = await commonService.findByCondition(
+			Users,
+			{ phoneNumber: phoneNumber },
+			[],
+			true
+		);
 
 		// Check (Optional)
-		if (affectedRecordsCnt === 0) {
+		if (!user) {
 			// User not found
 			return response.errorResponse(
 				req,
@@ -303,10 +296,19 @@ module.exports.reSendOtpPhone = async (req, res) => {
 			);
 		}
 
+		// store the otp to the user record
+		user.otp = otp;
+		user.otpExpiredAt =
+			Date.now() +
+			2 * 60 * 1000; /* Once generated, OTP will expire in 2 minutes */
+
+		// Save the changes
+		await commonService.saveRecord(user, dbTransaction);
+
 		// send the OTP to the user's phone number - twilio
 		const otpMessage = generateOtpMessageTemplate(otp, 2);
 		await smsService.sendSMS({
-			recipientPhoneNumber: affectedRecords[1]?.phoneNumber,
+			recipientPhoneNumber: user?.phoneNumber,
 			messageTemplate: otpMessage,
 		});
 
@@ -333,7 +335,7 @@ module.exports.reSendOtpPhone = async (req, res) => {
 };
 
 // SEND OTP - Email Address
-module.exports.sendOtpEmail = async (req, res) => {
+module.exports.sendOtpEmail = async (req, res, next) => {
 	const dbTransaction = await db.transaction();
 
 	try {
@@ -358,19 +360,13 @@ module.exports.sendOtpEmail = async (req, res) => {
 		const otp = commonUtil.generateOTP(4);
 
 		// store the generated OTP in the user record
-		await commonService.updateRecord(
-			Users,
-			{
-				otp: otp,
-				otpExpiredAt:
-					Date.now() +
-					2 *
-						60 *
-						1000 /* OTP will expire in 2 minutes after generation */,
-			},
-			{ id: user.id },
-			dbTransaction
-		);
+		user.otp = otp;
+		user.otpExpiredAt =
+			Date.now() +
+			2 * 60 * 1000; /* OTP will expire in 2 minutes after generation */
+
+		// Save the changes
+		await commonService.saveRecord(user, dbTransaction);
 
 		// send the OTP to the user's phone number - twilio
 		const otpEmailMessage = generateOtpEmailTemplate(otp, 2);
@@ -404,11 +400,11 @@ module.exports.sendOtpEmail = async (req, res) => {
 };
 
 // VERIFY OTP - Email Address
-module.exports.verifyOtpEmail = async (req, res) => {
+module.exports.verifyOtpEmail = async (req, res, next) => {
 	const dbTransaction = await db.transaction();
 
 	try {
-		const { id } = req.user;
+		let { user } = req;
 		const { otp } = req.body;
 		const { Users } = db.models;
 
@@ -424,8 +420,6 @@ module.exports.verifyOtpEmail = async (req, res) => {
 				dbTransaction
 			);
 		}
-
-		const user = await commonService.findByPrimaryKey(Users, id);
 
 		// Check: OTP is correct or not
 		if (!(await user.compareOTP(otp))) {
@@ -449,17 +443,13 @@ module.exports.verifyOtpEmail = async (req, res) => {
 			);
 		}
 
-		// Update the user record
-		await commonService.updateRecord(
-			Users,
-			{
-				otp: null,
-				otpExpiredAt: null,
-				emailVerifiedAt: Date.now(),
-			},
-			{ id: user.id },
-			dbTransaction
-		);
+		// Update the user record.
+		user.otp = null;
+		user.otpExpiredAt = null;
+		user.emailVerifiedAt = Date.now();
+
+		// Save the changes
+		user = await commonService.saveRecord(user, dbTransaction, true);
 
 		return response.successResponse(
 			req,
@@ -484,7 +474,7 @@ module.exports.verifyOtpEmail = async (req, res) => {
 };
 
 // LOGOUT
-module.exports.logout = async (req, res) => {
+module.exports.logout = async (req, res, next) => {
 	const dbTransaction = await db.transaction();
 
 	try {
@@ -573,7 +563,7 @@ module.exports.logout = async (req, res) => {
 };
 
 // REFRESH ACCESS TOKEN
-module.exports.refreshAccessToken = async (req, res) => {
+module.exports.refreshAccessToken = async (req, res, next) => {
 	const dbTransaction = await db.transaction();
 
 	try {
