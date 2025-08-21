@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
 				type: DataTypes.UUID,
 				allowNull: false,
 				references: {
-					model: "users", // refers to the User model
+					model: "user", // refers to the User model
 					key: "id", // refers to the 'id' field of that model i.e., refers to the "id" field of "Users" model.
 				},
 				onDelete: "CASCADE", // If user is deleted, delete all their addresses

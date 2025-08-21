@@ -4,20 +4,30 @@
 
 /**
  * createNewRecord(): This function is used to create a new record in the database.
+ * optionally supporting nested creation for associated models.
  * @param {object} model - The model to be used for creating a new record.
  * @param {object} data - The data to be used for creating a new record.
  * @param {object} dbTransaction - The database transaction object.
  * @param {boolean} raw - Whether to return raw sequelize instance or not.
+ * @param {Array|null} [include=null] - Optional array of associated models to include for nested creation.
+ *                                      Each item should contain the model and alias (`as`) if defined.
  * @returns {object} - The record found in the database.
  */
 module.exports.createNewRecord = async (
 	model,
 	data,
 	dbTransaction,
-	raw = false
+	raw = false,
+	include = null
 ) => {
 	try {
-		const record = await model.create(data, { transaction: dbTransaction });
+
+		const options = {transaction: dbTransaction};
+		if(include){
+			options.include = include;
+		}
+
+		const record = await model.create(data, options);
 		if (raw) {
 			return record ? record : null;
 		}

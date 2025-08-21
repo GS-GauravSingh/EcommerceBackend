@@ -80,7 +80,7 @@ module.exports = (sequelize, DataTypes) => {
 
 			refreshToken: {
 				type: DataTypes.STRING,
-				allowNull: true
+				allowNull: true,
 			},
 		},
 
@@ -132,6 +132,7 @@ module.exports = (sequelize, DataTypes) => {
 		// One user can have multiple addresses - one-to-many relationship between "user" and "address" table.
 		UserModel.hasMany(models.Addresses, {
 			foreignKey: "userId",
+			as: "addresses",
 		});
 	};
 

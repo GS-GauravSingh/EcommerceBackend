@@ -54,7 +54,7 @@ sequelize
 // Sync all models with the database
 // Use `alter: true` to update the database schema without dropping existing tables, "force: true" will drop the tables and recreate them, "logging: true" will log the SQL queries
 sequelize
-	.sync({ force: false, alter: false, logging: false })
+	.sync({ force: true, alter: false, logging: false })
 	.then(() => {
 		console.log("✅ All models were synchronized successfully.");
 	})
